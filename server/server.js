@@ -48,6 +48,7 @@ app.get("/", (req, res) => {
     res.send("Expense Tracker API Running Successfully 🚀");
 });
 //add the comment
+//send the comment
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/income", incomeRoutes);
