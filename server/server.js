@@ -44,6 +44,10 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "smart-expense-tracker" });
 });
 
+app.get("/", (req, res) => {
+    res.send("Expense Tracker API Running Successfully 🚀");
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/income", incomeRoutes);
