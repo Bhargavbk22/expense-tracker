@@ -1,12 +1,9 @@
-Updated Jenkins pipeline with:
+The error happened because you copied the explanation text (`* Node 18 support`) into the Jenkinsfile.
+Jenkins only accepts pure Groovy pipeline syntax.
 
-* Node 18 support
-* Better Sonar exclusions
-* Safer Docker login
-* Continue pipeline even if Quality Gate fails
-* Workspace cleanup improvements
-* npm cache cleanup
-* Better Windows compatibility
+Remove everything before `pipeline {`.
+
+Use this exact Jenkinsfile:
 
 ```groovy
 pipeline {
