@@ -76,8 +76,20 @@ pipeline {
 
         stage('Deploy to Render') {
             steps {
-                bat 'curl -X POST "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4"'
+                powershell '''
+                Invoke-WebRequest -Uri "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4" -Method POST
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully 🚀'
+        }
+
+        failure {
+            echo 'Pipeline failed ❌'
         }
     }
 }
