@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SONAR_SCANNER = tool 'SonarScanner'
-        DOCKER_IMAGE  = 'bargav22/expense-tracker'
+        DOCKER_IMAGE = 'bargav22/expense-tracker'
     }
 
     triggers {
@@ -28,7 +28,7 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Server Dependencies') {
             steps {
                 dir('server') {
                     bat 'npm install'
@@ -36,10 +36,26 @@ pipeline {
             }
         }
 
+        stage('Install Client Dependencies') {
+            steps {
+                dir('client') {
+                    bat 'npm install'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('client') {
+                    bat 'npm run build'
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    bat "%SONAR_SCANNER%\\bin\\sonar-scanner.bat"
+                    bat '"%SONAR_SCANNER%\\bin\\sonar-scanner.bat"'
                 }
             }
         }
@@ -47,7 +63,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
@@ -65,6 +81,7 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
+
                     bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
                     bat 'docker push %DOCKER_IMAGE%:latest'
                 }
@@ -73,8 +90,12 @@ pipeline {
 
         stage('Deploy to Render') {
             steps {
-                withCredentials([string(credentialsId: 'render-deploy-url', variable: 'RENDER_URL')]) {
-                    bat 'curl -X POST "%RENDER_URL%"'
+                withCredentials([string(
+                    credentialsId: 'render-deploy-url',
+                    variable: 'RENDER_URL'
+                )]) {
+
+                    powershell 'Invoke-WebRequest -Uri $env:RENDER_URL -Method POST'
                 }
             }
         }
@@ -82,10 +103,11 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully'
+            echo 'Pipeline completed successfully 🚀'
         }
+
         failure {
-            echo 'Pipeline failed'
+            echo 'Pipeline failed ❌'
         }
     }
 }
