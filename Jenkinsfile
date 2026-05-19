@@ -1,16 +1,8 @@
-The error happened because you copied the explanation text (`* Node 18 support`) into the Jenkinsfile.
-Jenkins only accepts pure Groovy pipeline syntax.
-
-Remove everything before `pipeline {`.
-
-Use this exact Jenkinsfile:
-
-```groovy
 pipeline {
     agent any
 
     tools {
-        nodejs "Node18"
+        nodejs "NodeJS"
     }
 
     environment {
@@ -24,7 +16,6 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
-        disableConcurrentBuilds()
     }
 
     stages {
@@ -129,24 +120,19 @@ sonar.exclusions=**/node_modules/**,**/.scannerwork/**,**/coverage/**
     post {
 
         always {
-
             cleanWs()
         }
 
         success {
-
             echo 'Pipeline executed successfully.'
         }
 
         unstable {
-
             echo 'Pipeline completed but SonarQube Quality Gate failed.'
         }
 
         failure {
-
             echo 'Pipeline failed.'
         }
     }
 }
-```
