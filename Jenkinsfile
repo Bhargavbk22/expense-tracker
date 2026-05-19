@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SONAR_SCANNER = tool 'SonarScanner'
-        DOCKER_IMAGE = 'bargav22/expense-tracker'
+        DOCKER_IMAGE  = 'bargav22/expense-tracker'
     }
 
     triggers {
@@ -39,9 +39,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    bat """
-                    %SONAR_SCANNER%\\bin\\sonar-scanner.bat
-                    """
+                    bat "%SONAR_SCANNER%\\bin\\sonar-scanner.bat"
                 }
             }
         }
@@ -67,7 +65,6 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-
                     bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
                     bat 'docker push %DOCKER_IMAGE%:latest'
                 }
@@ -76,7 +73,9 @@ pipeline {
 
         stage('Deploy to Render') {
             steps {
-                powershell 'Invoke-WebRequest -Uri "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4" -Method POST'
+                withCredentials([string(credentialsId: 'render-deploy-url', variable: 'RENDER_URL')]) {
+                    bat 'curl -X POST "%RENDER_URL%"'
+                }
             }
         }
     }
@@ -85,11 +84,8 @@ pipeline {
         success {
             echo 'Pipeline completed successfully'
         }
-
         failure {
             echo 'Pipeline failed'
         }
     }
 }
-//hello
-//  This Jenkinsfile defines a CI/CD pipeline for a Node.js application. It includes stages for cleaning the workspace, cloning the repository, installing dependencies, performing SonarQube analysis, checking the quality gate, building and pushing a Docker image, and deploying to Render. The pipeline is triggered by GitHub pushes and uses environment variables and credentials for secure access to tools and services.
