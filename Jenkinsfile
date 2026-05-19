@@ -91,4 +91,5 @@ pipeline {
         }
     }
 }
-// This Jenkinsfile defines a CI/CD pipeline for a Node.js application. It includes stages for cleaning the workspace, cloning the repository, installing dependencies, performing SonarQube analysis, checking the quality gate, building and pushing a Docker image, and deploying to Render. The pipeline is triggered by GitHub pushes and uses environment variables and credentials for secure access to tools and services.
+//hello
+//  This Jenkinsfile defines a CI/CD pipeline for a Node.js application. It includes stages for cleaning the workspace, cloning the repository, installing dependencies, performing SonarQube analysis, checking the quality gate, building and pushing a Docker image, and deploying to Render. The pipeline is triggered by GitHub pushes and uses environment variables and credentials for secure access to tools and services.
