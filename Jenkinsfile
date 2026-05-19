@@ -53,12 +53,13 @@ sonar.projectKey=expense-tracker
 sonar.projectName=Expense Tracker
 sonar.sources=server
 sonar.exclusions=**/node_modules/**,**/.scannerwork/**,**/coverage/**
+sonar.sourceEncoding=UTF-8
 '''
 
                 withSonarQubeEnv('SonarQube') {
 
                     bat """
-                    %SONAR_SCANNER%\\bin\\sonar-scanner.bat
+                    "%SONAR_SCANNER%\\bin\\sonar-scanner.bat"
                     """
                 }
             }
@@ -102,7 +103,7 @@ sonar.exclusions=**/node_modules/**,**/.scannerwork/**,**/coverage/**
                     )
                 ]) {
 
-                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                    bat 'echo %DOCKER_PASS% | docker login -u "%DOCKER_USER%" --password-stdin'
 
                     bat 'docker push %DOCKER_IMAGE%:latest'
                 }
@@ -112,7 +113,15 @@ sonar.exclusions=**/node_modules/**,**/.scannerwork/**,**/coverage/**
         stage('Deploy to Render') {
             steps {
 
-                bat 'curl -X POST "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4"'
+                withCredentials([
+                    string(
+                        credentialsId: 'render-deploy-hook',
+                        variable: 'RENDER_DEPLOY_HOOK'
+                    )
+                ]) {
+
+                    bat 'curl -X POST "%RENDER_DEPLOY_HOOK%"'
+                }
             }
         }
     }
