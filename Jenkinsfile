@@ -39,7 +39,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    bat '"%SONAR_SCANNER%\\bin\\sonar-scanner.bat"'
+                    bat """
+                    %SONAR_SCANNER%\\bin\\sonar-scanner.bat
+                    """
                 }
             }
         }
@@ -47,7 +49,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -74,24 +76,8 @@ pipeline {
 
         stage('Deploy to Render') {
             steps {
-                withCredentials([string(
-                    credentialsId: 'render-deploy-url',
-                    variable: 'RENDER_URL'
-                )]) {
-
-                    powershell 'Invoke-WebRequest -Uri $env:RENDER_URL -Method POST'
-                }
+                bat 'curl -X POST "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4"'
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully 🚀'
-        }
-
-        failure {
-            echo 'Pipeline failed ❌'
         }
     }
 }
