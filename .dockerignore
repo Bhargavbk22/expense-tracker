@@ -1,4 +1,14 @@
 node_modules
+**/node_modules
+**/node_modules/**
+
 .git
+.git/**
+
 .scannerwork
+**/.scannerwork
+**/.scannerwork/**
+
 coverage
+**/coverage
+**/coverage/**
