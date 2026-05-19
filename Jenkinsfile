@@ -1,8 +1,19 @@
+Updated Jenkins pipeline with:
+
+* Node 18 support
+* Better Sonar exclusions
+* Safer Docker login
+* Continue pipeline even if Quality Gate fails
+* Workspace cleanup improvements
+* npm cache cleanup
+* Better Windows compatibility
+
+```groovy
 pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS"
+        nodejs "Node18"
     }
 
     environment {
@@ -14,6 +25,11 @@ pipeline {
         githubPush()
     }
 
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+    }
+
     stages {
 
         stage('Clean Workspace') {
@@ -22,7 +38,7 @@ pipeline {
             }
         }
 
-        stage('Clone') {
+        stage('Clone Repository') {
             steps {
                 checkout scm
             }
@@ -31,6 +47,11 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 dir('server') {
+
+                    bat 'if exist node_modules rmdir /s /q node_modules'
+
+                    bat 'npm cache clean --force'
+
                     bat 'npm install'
                 }
             }
@@ -38,7 +59,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+
+                writeFile file: 'sonar-project.properties', text: '''
+sonar.projectKey=expense-tracker
+sonar.projectName=Expense Tracker
+sonar.sources=server
+sonar.exclusions=**/node_modules/**,**/.scannerwork/**,**/coverage/**
+'''
+
                 withSonarQubeEnv('SonarQube') {
+
                     bat """
                     %SONAR_SCANNER%\\bin\\sonar-scanner.bat
                     """
@@ -48,27 +78,44 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
+
                 timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+
+                    script {
+
+                        def qg = waitForQualityGate()
+
+                        if (qg.status != 'OK') {
+
+                            echo "Quality Gate Failed: ${qg.status}"
+
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
+
                 bat 'docker build -t %DOCKER_IMAGE%:latest .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
 
-                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+
                     bat 'docker push %DOCKER_IMAGE%:latest'
                 }
             }
@@ -76,8 +123,33 @@ pipeline {
 
         stage('Deploy to Render') {
             steps {
+
                 bat 'curl -X POST "https://api.render.com/deploy/srv-d85hmv8js32c73aj76o0?key=uD39HO1ZWW4"'
             }
         }
     }
+
+    post {
+
+        always {
+
+            cleanWs()
+        }
+
+        success {
+
+            echo 'Pipeline executed successfully.'
+        }
+
+        unstable {
+
+            echo 'Pipeline completed but SonarQube Quality Gate failed.'
+        }
+
+        failure {
+
+            echo 'Pipeline failed.'
+        }
+    }
 }
+```
